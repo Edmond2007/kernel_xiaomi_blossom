@@ -1,0 +1,78 @@
+name: Kernel Build CI
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    env:
+      ARCH: arm64
+      CC: clang
+      CLANG_TRIPLE: aarch64-linux-gnu-
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends \
+            git build-essential bc bison flex \
+            libssl-dev libelf-dev zlib1g-dev \
+            clang lld llvm gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi \
+            python3 python3-pip ninja-build zip
+          sudo ln -sf /usr/bin/ld.lld /usr/bin/ld || true
+
+      - name: Notify start on Telegram
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="⚙️ Kernel build has started..."
+
+      - name: Build the kernel and log output
+        run: |
+          mkdir -p out
+          make O=out ARCH=$ARCH CC=$CC nethunter_defconfig
+          make -j$(nproc) O=out ARCH=$ARCH CC=$CC \
+            CROSS_COMPILE=aarch64-linux-gnu- \
+            CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
+            AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy \
+            OBJDUMP=llvm-objdump STRIP=llvm-strip \
+            LD=ld.lld LLVM_IAS=1 \
+            | tee build.log
+
+      - name: Zip kernel modules
+        run: |
+          find out -name '*.ko' > module_list.txt
+          zip -@ out/kernel-modules.zip < module_list.txt
+
+      - name: Send build log to Telegram
+        if: always()
+        run: |
+          curl -s -F document=@build.log \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -F caption="📄 Kernel build log"
+
+      - name: Send build artifacts to Telegram
+        if: success()
+        run: |
+          curl -s -F document=@out/arch/arm64/boot/Image.gz-dtb \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -F caption="Image.gz-dtb"
+
+          curl -s -F document=@out/kernel-modules.zip \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -F caption="Kernel Modules ZIP"
+
+      - name: Notify failure on Telegram
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="❌ Kernel build failed!"
