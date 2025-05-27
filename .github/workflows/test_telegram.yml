@@ -1,4 +1,4 @@
-name: Kernel Build CI
+name: Telegram Test
 
 on:
   push:
