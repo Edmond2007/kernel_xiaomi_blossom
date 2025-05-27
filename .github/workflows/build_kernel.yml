@@ -28,7 +28,7 @@ jobs:
             clang lld llvm gcc-aarch64-linux-gnu gcc-arm-linux-gnueabi \
             python3 python3-pip ninja-build zip
           sudo ln -sf /usr/bin/ld.lld /usr/bin/ld || true
-
+          ./prepare_compiler.sh
       - name: Notify start on Telegram
         run: |
           curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
@@ -38,14 +38,8 @@ jobs:
       - name: Build the kernel and log output
         run: |
           mkdir -p out
-          make O=out ARCH=$ARCH CC=$CC nethunter_defconfig
-          make -j$(nproc) O=out ARCH=$ARCH CC=$CC \
-            CROSS_COMPILE=aarch64-linux-gnu- \
-            CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-            AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy \
-            OBJDUMP=llvm-objdump STRIP=llvm-strip \
-            LD=ld.lld LLVM_IAS=1 \
-            | tee build.log
+          make O=out ARCH=$ARCH CC=$CC blossom_defconfig
+          ./clang.sh | tee build.log
 
       - name: Zip kernel modules
         run: |
