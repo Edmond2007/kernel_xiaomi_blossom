@@ -41,10 +41,10 @@ jobs:
           make O=out ARCH=$ARCH CC=$CC blossom_defconfig
           ./clang.sh | tee build.log
 
-      - name: Zip kernel modules
-        run: |
-          find out -name '*.ko' > module_list.txt
-          zip -@ out/kernel-modules.zip < module_list.txt
+      #- name: Zip kernel modules
+      #  run: |
+      #    find out -name '*.ko' > module_list.txt
+      #    zip -@ out/kernel-modules.zip < module_list.txt
 
       - name: Send build log to Telegram
         if: always()
@@ -60,9 +60,12 @@ jobs:
             "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
             -F caption="Image.gz-dtb"
 
-          curl -s -F document=@out/kernel-modules.zip \
-            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F caption="Kernel Modules ZIP"
+      #    curl -s -F document=@out/kernel-modules.zip \
+      #      "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendDocument?chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+      #      -F caption="Kernel Modules ZIP"
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="✅ Build Complete!"
 
       - name: Notify failure on Telegram
         if: failure()
