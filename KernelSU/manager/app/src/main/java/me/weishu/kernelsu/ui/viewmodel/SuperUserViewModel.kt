@@ -1,6 +1,7 @@
 package me.weishu.kernelsu.ui.viewmodel
 
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.pm.ApplicationInfo
@@ -28,6 +29,7 @@ import java.text.Collator
 import java.util.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+import androidx.core.content.edit
 
 class SuperUserViewModel : ViewModel() {
 
@@ -45,7 +47,7 @@ class SuperUserViewModel : ViewModel() {
         val packageName: String
             get() = packageInfo.packageName
         val uid: Int
-            get() = packageInfo.applicationInfo.uid
+            get() = packageInfo.applicationInfo!!.uid
 
         val allowSu: Boolean
             get() = profile != null && profile.allowSu
@@ -63,10 +65,18 @@ class SuperUserViewModel : ViewModel() {
             }
     }
 
+    private val prefs = ksuApp.getSharedPreferences("settings", Context.MODE_PRIVATE)!!
+
     var search by mutableStateOf("")
-    var showSystemApps by mutableStateOf(false)
+    var showSystemApps by mutableStateOf(prefs.getBoolean("show_system_apps", false))
+        private set
     var isRefreshing by mutableStateOf(false)
         private set
+
+    fun updateShowSystemApps(newValue: Boolean) {
+        showSystemApps = newValue
+        prefs.edit { putBoolean("show_system_apps", newValue) }
+    }
 
     private val sortedList by derivedStateOf {
         val comparator = compareBy<AppInfo> {
@@ -90,7 +100,7 @@ class SuperUserViewModel : ViewModel() {
                 .toPinyinString(it.label).contains(search, true)
         }.filter {
             it.uid == 2000 // Always show shell
-                    || showSystemApps || it.packageInfo.applicationInfo.flags.and(ApplicationInfo.FLAG_SYSTEM) == 0
+                    || showSystemApps || it.packageInfo.applicationInfo!!.flags.and(ApplicationInfo.FLAG_SYSTEM) == 0
         }
     }
 
@@ -146,7 +156,7 @@ class SuperUserViewModel : ViewModel() {
 
             apps = packages.map {
                 val appInfo = it.applicationInfo
-                val uid = appInfo.uid
+                val uid = appInfo!!.uid
                 val profile = Natives.getAppProfile(it.packageName, uid)
                 AppInfo(
                     label = appInfo.loadLabel(pm).toString(),

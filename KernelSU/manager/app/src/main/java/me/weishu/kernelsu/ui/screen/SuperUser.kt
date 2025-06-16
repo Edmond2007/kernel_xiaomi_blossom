@@ -4,19 +4,18 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -26,24 +25,34 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.generated.destinations.AppProfileScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.launch
 import me.weishu.kernelsu.Natives
 import me.weishu.kernelsu.R
 import me.weishu.kernelsu.ui.component.SearchAppBar
-import me.weishu.kernelsu.ui.screen.destinations.AppProfileScreenDestination
 import me.weishu.kernelsu.ui.viewmodel.SuperUserViewModel
 
-@OptIn(ExperimentalMaterialApi::class)
-@Destination
+@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@Destination<RootGraph>
 @Composable
 fun SuperUserScreen(navigator: DestinationsNavigator) {
     val viewModel = viewModel<SuperUserViewModel>()
     val scope = rememberCoroutineScope()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    val listState = rememberLazyListState()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(key1 = navigator) {
+        viewModel.search = ""
         if (viewModel.appList.isEmpty()) {
             viewModel.fetchAppList()
+        }
+    }
+
+    LaunchedEffect(viewModel.search) {
+        if (viewModel.search.isEmpty()) {
+            listState.scrollToItem(0)
         }
     }
 
@@ -85,38 +94,36 @@ fun SuperUserScreen(navigator: DestinationsNavigator) {
                                     }
                                 )
                             }, onClick = {
-                                viewModel.showSystemApps = !viewModel.showSystemApps
+                                viewModel.updateShowSystemApps(!viewModel.showSystemApps)
                                 showDropdown = false
                             })
                         }
                     }
                 },
+                scrollBehavior = scrollBehavior
             )
-        }
+        },
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
     ) { innerPadding ->
-        val refreshState = rememberPullRefreshState(
-            refreshing = viewModel.isRefreshing,
-            onRefresh = { scope.launch { viewModel.fetchAppList() } },
-        )
-        Box(
-            modifier = Modifier
-                .padding(innerPadding)
-                .pullRefresh(refreshState)
+        PullToRefreshBox(
+            modifier = Modifier.padding(innerPadding),
+            onRefresh = {
+                scope.launch { viewModel.fetchAppList() }
+            },
+            isRefreshing = viewModel.isRefreshing
         ) {
-            LazyColumn(Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .nestedScroll(scrollBehavior.nestedScrollConnection)
+            ) {
                 items(viewModel.appList, key = { it.packageName + it.uid }) { app ->
                     AppItem(app) {
                         navigator.navigate(AppProfileScreenDestination(app))
                     }
-
                 }
             }
-
-            PullRefreshIndicator(
-                refreshing = viewModel.isRefreshing,
-                state = refreshState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
         }
     }
 }

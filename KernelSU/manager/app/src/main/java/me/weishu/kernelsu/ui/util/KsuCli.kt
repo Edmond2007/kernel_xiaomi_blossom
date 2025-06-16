@@ -4,16 +4,15 @@ import android.content.ContentResolver
 import android.content.Context
 import android.database.Cursor
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import android.os.Parcelable
 import android.os.SystemClock
 import android.provider.OpenableColumns
+import android.system.Os
 import android.util.Log
 import com.topjohnwu.superuser.CallbackList
 import com.topjohnwu.superuser.Shell
 import com.topjohnwu.superuser.ShellUtils
-import com.topjohnwu.superuser.io.SuFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
@@ -34,6 +33,11 @@ private fun getKsuDaemonPath(): String {
     return ksuApp.applicationInfo.nativeLibraryDir + File.separator + "libksud.so"
 }
 
+data class FlashResult(val code: Int, val err: String, val showReboot: Boolean) {
+    constructor(result: Shell.Result, showReboot: Boolean) : this(result.code, result.err.joinToString("\n"), showReboot)
+    constructor(result: Shell.Result) : this(result, result.isSuccess)
+}
+
 object KsuCli {
     val SHELL: Shell = createRootShell()
     val GLOBAL_MNT_SHELL: Shell = createRootShell(true)
@@ -52,10 +56,10 @@ inline fun <T> withNewRootShell(
     return createRootShell(globalMnt).use(block)
 }
 
-fun getFileNameFromUri(context: Context, uri: Uri): String? {
+fun Uri.getFileName(context: Context): String? {
     var fileName: String? = null
     val contentResolver: ContentResolver = context.contentResolver
-    val cursor: Cursor? = contentResolver.query(uri, null, null, null, null)
+    val cursor: Cursor? = contentResolver.query(this, null, null, null, null)
     cursor?.use {
         if (it.moveToFirst()) {
             fileName = it.getString(it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
@@ -67,6 +71,7 @@ fun getFileNameFromUri(context: Context, uri: Uri): String? {
 fun createRootShell(globalMnt: Boolean = false): Shell {
     Shell.enableVerboseLogging = BuildConfig.DEBUG
     val builder = Shell.Builder.create()
+
     return try {
         if (globalMnt) {
             builder.build(getKsuDaemonPath(), "debug", "su", "-g")
@@ -77,9 +82,9 @@ fun createRootShell(globalMnt: Boolean = false): Shell {
         Log.w(TAG, "ksu failed: ", e)
         try {
             if (globalMnt) {
-                builder.build("su")
-            } else {
                 builder.build("su", "-mm")
+            } else {
+                builder.build("su")
             }
         } catch (e: Throwable) {
             Log.e(TAG, "su failed: ", e)
@@ -143,6 +148,13 @@ fun uninstallModule(id: String): Boolean {
     return result
 }
 
+fun restoreModule(id: String): Boolean {
+    val cmd = "module restore $id"
+    val result = execKsud(cmd, true)
+    Log.i(TAG, "restore module $id result: $result")
+    return result
+}
+
 private fun flashWithIO(
     cmd: String,
     onStdout: (String) -> Unit,
@@ -168,10 +180,9 @@ private fun flashWithIO(
 
 fun flashModule(
     uri: Uri,
-    onFinish: (Boolean, Int) -> Unit,
     onStdout: (String) -> Unit,
     onStderr: (String) -> Unit
-): Boolean {
+): FlashResult {
     val resolver = ksuApp.contentResolver
     with(resolver.openInputStream(uri)) {
         val file = File(ksuApp.cacheDir, "module.zip")
@@ -184,31 +195,48 @@ fun flashModule(
 
         file.delete()
 
-        onFinish(result.isSuccess, result.code)
-        return result.isSuccess
+        return FlashResult(result)
     }
 }
 
-fun restoreBoot(
-    onFinish: (Boolean, Int) -> Unit, onStdout: (String) -> Unit, onStderr: (String) -> Unit
+fun runModuleAction(
+    moduleId: String, onStdout: (String) -> Unit, onStderr: (String) -> Unit
 ): Boolean {
+    val shell = createRootShell(true)
+
+    val stdoutCallback: CallbackList<String?> = object : CallbackList<String?>() {
+        override fun onAddElement(s: String?) {
+            onStdout(s ?: "")
+        }
+    }
+
+    val stderrCallback: CallbackList<String?> = object : CallbackList<String?>() {
+        override fun onAddElement(s: String?) {
+            onStderr(s ?: "")
+        }
+    }
+
+    val result = shell.newJob().add("${getKsuDaemonPath()} module action $moduleId")
+        .to(stdoutCallback, stderrCallback).exec()
+    Log.i("KernelSU", "Module runAction result: $result")
+
+    return result.isSuccess
+}
+
+fun restoreBoot(
+    onStdout: (String) -> Unit, onStderr: (String) -> Unit
+): FlashResult {
     val magiskboot = File(ksuApp.applicationInfo.nativeLibraryDir, "libmagiskboot.so")
     val result = flashWithIO("${getKsuDaemonPath()} boot-restore -f --magiskboot $magiskboot", onStdout, onStderr)
-    onFinish(result.isSuccess, result.code)
-    return result.isSuccess
+    return FlashResult(result)
 }
 
 fun uninstallPermanently(
-    onFinish: (Boolean, Int) -> Unit, onStdout: (String) -> Unit, onStderr: (String) -> Unit
-): Boolean {
+    onStdout: (String) -> Unit, onStderr: (String) -> Unit
+): FlashResult {
     val magiskboot = File(ksuApp.applicationInfo.nativeLibraryDir, "libmagiskboot.so")
     val result = flashWithIO("${getKsuDaemonPath()} uninstall --magiskboot $magiskboot", onStdout, onStderr)
-    onFinish(result.isSuccess, result.code)
-    return result.isSuccess
-}
-
-suspend fun shrinkModules(): Boolean = withContext(Dispatchers.IO) {
-    execKsud("module shrink", true)
+    return FlashResult(result)
 }
 
 @Parcelize
@@ -222,10 +250,9 @@ fun installBoot(
     bootUri: Uri?,
     lkm: LkmSelection,
     ota: Boolean,
-    onFinish: (Boolean, Int) -> Unit,
     onStdout: (String) -> Unit,
     onStderr: (String) -> Unit,
-): Boolean {
+): FlashResult {
     val resolver = ksuApp.contentResolver
 
     val bootFile = bootUri?.let { uri ->
@@ -288,8 +315,7 @@ fun installBoot(
     lkmFile?.delete()
 
     // if boot uri is empty, it is direct install, when success, we should show reboot button
-    onFinish(bootUri == null && result.isSuccess, result.code)
-    return result.isSuccess
+    return FlashResult(result, bootUri == null && result.isSuccess)
 }
 
 fun reboot(reason: String = "") {
@@ -312,18 +338,7 @@ fun isAbDevice(): Boolean {
 }
 
 fun isInitBoot(): Boolean {
-    val shell = getRootShell()
-    if (shell.isRoot) {
-        // if we have root, use /dev/block/by-name/init_boot to check
-        val abDevice = isAbDevice()
-        val initBootBlock = "/dev/block/by-name/init_boot${if (abDevice) "_a" else ""}"
-        val file = SuFile(initBootBlock)
-        file.shell = shell
-        return file.exists()
-    }
-    // https://source.android.com/docs/core/architecture/partitions/generic-boot
-    return ShellUtils.fastCmd(shell, "getprop ro.product.first_api_level").trim()
-        .toInt() >= Build.VERSION_CODES.TIRAMISU
+    return !Os.uname().release.contains("android12-")
 }
 
 suspend fun getCurrentKmi(): String = withContext(Dispatchers.IO) {
@@ -339,17 +354,27 @@ suspend fun getSupportedKmis(): List<String> = withContext(Dispatchers.IO) {
     out.filter { it.isNotBlank() }.map { it.trim() }
 }
 
-fun overlayFsAvailable(): Boolean {
-    val shell = getRootShell()
-    // check /proc/filesystems
-    return ShellUtils.fastCmdResult(shell, "cat /proc/filesystems | grep overlay")
-}
-
 fun hasMagisk(): Boolean {
     val shell = getRootShell(true)
     val result = shell.newJob().add("which magisk").exec()
     Log.i(TAG, "has magisk: ${result.isSuccess}")
     return result.isSuccess
+}
+
+fun isGlobalNamespaceEnabled(): Boolean {
+    val shell = getRootShell()
+    val result =
+        ShellUtils.fastCmd(shell, "cat ${Natives.GLOBAL_NAMESPACE_FILE}")
+    Log.i(TAG, "is global namespace enabled: $result")
+    return result == "1"
+}
+
+fun setGlobalNamespaceEnabled(value: String) {
+    getRootShell().newJob()
+        .add("echo $value > ${Natives.GLOBAL_NAMESPACE_FILE}")
+        .submit { result ->
+            Log.i(TAG, "setGlobalNamespaceEnabled result: ${result.isSuccess} [${result.out}]")
+        }
 }
 
 fun isSepolicyValid(rules: String?): Boolean {

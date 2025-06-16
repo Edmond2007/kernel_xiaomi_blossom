@@ -18,8 +18,12 @@ KernelSU uses kprobe to do kernel hooks, if the *kprobe* runs well in your kerne
 First, add KernelSU to your kernel source tree:
 
 ```sh
-curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
 ```
+
+:::info
+[KernelSU 1.0 and later versions no longer support non-GKI kernels](https://github.com/tiann/KernelSU/issues/1705). The last supported version is `v0.9.5`, please make sure to use the correct version.
+:::
 
 Then, you should check if *kprobe* is enabled in your kernel config, if it is not, please add these configs to it:
 
@@ -51,23 +55,11 @@ If kprobe does not work in your kernel (may be an upstream or kernel bug below 4
 
 First, add KernelSU to your kernel source tree:
 
-::: code-group
-
-```sh[Latest tag(stable)]
-curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+```sh
+curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
 ```
 
-```sh[ main branch(dev)]
-curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
-```
-
-```sh[Select tag(Such as v0.5.2)]
-curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.5.2
-```
-
-:::
-
-Keep in mind that on some devices, your defconfig may be in `arch/arm64/configs` or in other cases `arch/arm64/configs/vendor/your_defconfig`. For whichever defconfig you're using, make sure to enable `CONFIG_KSU` with `y` to enable or `n` to disable it. For example, in case you chose to enable it, you defconfig should contain the following string:
+Keep in mind that on some devices, your defconfig may be in `arch/arm64/configs` or in other cases `arch/arm64/configs/vendor/your_defconfig`. For whichever defconfig you are using, make sure to enable `CONFIG_KSU` with `y` to enable or `n` to disable it. For example, in case you chose to enable it, you defconfig should contain the following string:
 
 ```txt
 # KernelSU
@@ -266,7 +258,7 @@ index 2ff887661237..e758d7db7663 100644
 
 ### Safe Mode
 
-To enable KernelSU's built-in SafeMode, you should additionally modify `input_handle_event` function in `drivers/input/input.c`:
+To enable KernelSU's built-in Safe Mode, you should additionally modify `input_handle_event` function in `drivers/input/input.c`:
 
 :::tip
 It is strongly recommended to enable this feature, it is very helpful in preventing bootloops!
@@ -305,7 +297,7 @@ If you use manual integration and do not disable `CONFIG_KPROBES`, then the user
 
 ### Failed to execute `pm` in terminal?
 
-You should modify `fs/devpts/inode.c`, reference:
+You should modify `fs/devpts/inode.c`. Reference:
 
 ```diff
 diff --git a/fs/devpts/inode.c b/fs/devpts/inode.c
@@ -337,7 +329,7 @@ index 32f6f1c68..d69d8eca2 100644
 
 ### How to backport path_umount
 
-You can get module umount feature working on pre-GKI kernels by manually backporting `path_umount` from 5.9. You can use this patch as reference:
+You can get "Umount modules" feature working on pre-GKI kernels by manually backporting `path_umount` from 5.9. You can use this patch as reference:
 
 ```diff
 --- a/fs/namespace.c

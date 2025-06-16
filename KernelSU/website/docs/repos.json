@@ -54,7 +54,7 @@
         "kernel_name": "android_kernel_xiaomi_onc",
         "kernel_link": "https://github.com/hadadarjt/android_kernel_xiaomi_onc/tree/los21-KSU/local-non-gerrit-review",
         "devices": "Redmi 7: onclite | Redmi Y3: onc"
-    },   
+    },
     {
         "maintainer": "HMTheBoy154",
         "maintainer_link": "https://github.com/hmtheboy154",
@@ -399,20 +399,6 @@
         "devices": "Xiaomi Redmi Note 8/8T (ginkgo/willow)"
     },
     {
-        "maintainer": "Coconutat",
-        "maintainer_link": "https://github.com/Coconutat",
-        "kernel_name": "android_kernel_xiaomi_ruby_exp",
-        "kernel_link": "https://github.com/Coconutat/android_kernel_xiaomi_ruby_exp",
-        "devices": "Redmi Note 12 Pro / Pro+ For MIUI 14"
-    },
-    {
-        "maintainer": "Coconutat",
-        "maintainer_link": "https://github.com/Coconutat",
-        "kernel_name": "android_kernel_xiaomi_sdm845_byd_exp",
-        "kernel_link": "https://github.com/Coconutat/android_kernel_xiaomi_sdm845_byd_exp",
-        "devices": "Xiaomi Mi 8 Pro(UD)[equuleus]/Explorer Edition[ursa]"
-    },
-    {
         "maintainer": "Abdul Wahid Khan",
         "maintainer_link": "https://github.com/Wahid7852",
         "kernel_name": "kernel_xiaomi_begonia",
@@ -574,13 +560,6 @@
         "devices": "Google Pixel 3a & 3a XL (sargo & bonito)"
     },
     {
-        "maintainer": "rsuntk",
-        "maintainer_link": "https://github.com/rsuntk",
-        "kernel_name": "android_kernel_samsung_a12s",
-        "kernel_link": "https://github.com/rsuntk/android_kernel_samsung_a12s",
-        "devices": "Samsung Galaxy A12s (Nacho) | Exynos 850"
-    },
-    {
         "maintainer": "Lonelystar9x",
         "maintainer_link": "https://github.com/lonelystar9x",
         "kernel_name": "Kernel_xiaomi_sdm845",
@@ -607,13 +586,6 @@
         "kernel_name": "android_kernel_samsung_a34x",
         "kernel_link": "https://github.com/Fede2782/android_kernel_samsung_a34x/",
         "devices": "Samsung Galaxy A34 5G (a34x)"
-    },
-    {
-        "maintainer": "KJ-Network",
-        "maintainer_link": "https://github.com/KJ-Network",
-        "kernel_name": "K-Nel-M1721",
-        "kernel_link": "https://github.com/KJ-Network/K-Nel-M1721/",
-        "devices": "Meizu M6 Note (M1721)"
     },
     {
         "maintainer": "SnowWolf725    ",
@@ -649,13 +621,6 @@
         "kernel_name": "android_kernel_samsung_gta4xl",
         "kernel_link": "https://github.com/Fede2782/android_kernel_samsung_gta4xl",
         "devices": "Galaxy Tab S6 Lite LTE (gta4xl)"
-    },
-    {
-        "maintainer": "rsuntk",
-        "maintainer_link": "https://github.com/rsuntk",
-        "kernel_name": "android_kernel_samsung_a03",
-        "kernel_link": "https://github.com/rsuntk/android_kernel_samsung_a03",
-        "devices": "Samsung Galaxy A03 | Unisoc T606 | Scorpio Kernel"
     },
     {
         "maintainer": "ArchVisions",
@@ -712,5 +677,40 @@
         "kernel_name": "kernel_xiaomi_chopin",
         "kernel_link": "https://github.com/ChopinKernels/kernel_xiaomi_chopin_android_S",
         "devices": "Redmi Note 10 Pro 5G (chopin) / Poco X3 GT (choping)"
+    },
+    {
+        "maintainer": "Fede2782",
+        "maintainer_link": "https://github.com/Fede2782",
+        "kernel_name": "android_kernel_motorola_sdm632",
+        "kernel_link": "https://github.com/Fede2782/android_kernel_motorola_sdm632",
+        "devices": "Motorola Moto G7 (river)"
+    },
+    {
+        "maintainer": "EmanuelCN",
+        "maintainer_link": "https://github.com/EmanuelCN",
+        "kernel_name": "N0Kernel",
+        "kernel_link": "https://github.com/EmanuelCN/kernel_xiaomi_sm8250",
+        "devices": "Poco F3 (alioth) | Mi 10T/Pro (apollo) | Poco F4 (munch)"
+    },
+    {
+        "maintainer": "kvsnr113",
+        "maintainer_link": "https://github.com/kvsnr113",
+        "kernel_name": "NOVA Kernel",
+        "kernel_link": "https://github.com/kvsnr113/xiaomi_sm8250_kernel",
+        "devices": "Poco F3 (alioth) | Mi 10T/Pro (apollo) | Poco F4 (munch)"
+    },
+    {
+        "maintainer": "anVzdGFtb25",
+        "maintainer_link": "https://github.com/anVzdGFtb25",
+        "kernel_name": "android_kernel_xiaomi_mt6768",
+        "kernel_link": "https://github.com/anVzdGFtb25/android_kernel_xiaomi_mt6768",
+        "devices": "Redmi 9 ( lancelot )"
+    },
+    {
+        "maintainer": "rifsxd",
+        "maintainer_link": "https://github.com/rifsxd",
+        "kernel_name": "android_kernel_realme_RMX3511",
+        "kernel_link": "https://github.com/rifsxd/android_kernel_realme_RMX3511",
+        "devices": "Realme C35 (RMX3511)"
     }
 ]

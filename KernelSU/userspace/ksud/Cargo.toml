@@ -1,8 +1,7 @@
 [package]
 name = "ksud"
 version = "0.1.0"
-edition = "2021"
-rust-version = "1.77.2"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -10,40 +9,37 @@ rust-version = "1.77.2"
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 const_format = "0.2"
-zip = { version = "2", features = [
+zip = { version = "2", default-features = false }
+zip-extensions = { version = "0.8", features = [
     "deflate",
     "deflate64",
-    "bzip2",
     "time",
-    "zstd",
+    "lzma",
+    "xz",
 ], default-features = false }
-zip-extensions = "0.6"
-java-properties = "2"
+java-properties = { git = "https://github.com/Kernel-SU/java-properties.git", branch = "master", default-features = false }
 log = "0.4"
 env_logger = { version = "0.11", default-features = false }
-serde = { version = "1" }
 serde_json = "1"
-regex = "1"
 encoding_rs = "0.8"
-retry = "2"
 humansize = "2"
 libc = "0.2"
 extattr = "1"
 jwalk = "0.8"
 is_executable = "1"
-nom = "7"
-derive-new = "0.6"
+nom = "8"
+derive-new = "0.7"
 rust-embed = { version = "8", features = [
     "debug-embed",
     "compression", # must clean build after updating binaries
 ] }
-which = "6"
+which = "7"
 getopts = "0.2"
 sha256 = "1"
 sha1 = "0.10"
-tempdir = "0.3"
+tempfile = "3"
 chrono = "0.4"
-hole-punch = { git = "https://github.com/tiann/hole-punch" }
+regex-lite = "0.1"
 
 [target.'cfg(any(target_os = "android", target_os = "linux"))'.dependencies]
 rustix = { git = "https://github.com/Kernel-SU/rustix.git", branch = "main", features = [
@@ -51,13 +47,14 @@ rustix = { git = "https://github.com/Kernel-SU/rustix.git", branch = "main", fea
 ] }
 # some android specific dependencies which compiles under unix are also listed here for convenience of coding
 android-properties = { version = "0.2", features = ["bionic-deprecated"] }
-procfs = "0.16"
-loopdev = { git = "https://github.com/Kernel-SU/loopdev" }
+loopdev = { git = "https://github.com/rksuorg/loopdev.git", branch = "master" }
+procfs = "0.17"
 
 [target.'cfg(target_os = "android")'.dependencies]
-android_logger = "0.13"
+android_logger = { version = "0.14", default-features = false }
 
 [profile.release]
 strip = true
 opt-level = "z"
 lto = true
+codegen-units = 1
