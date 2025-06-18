@@ -955,7 +955,7 @@ struct file {
 	struct address_space	*f_mapping;
 	errseq_t		f_wb_err;
 } __randomize_layout
-  __attribute__((aligned(4)));	/* lest something weird decides that 2 is OK */
+  __attribute__((aligned(8)));
 
 struct file_handle {
 	__u32 handle_bytes;
@@ -1372,6 +1372,10 @@ extern int send_sigurg(struct fown_struct *fown);
 
 #define sb_has_enc_strict_mode(sb) \
 	(sb->s_encoding_flags & SB_ENC_STRICT_MODE_FL)
+
+#define sb_has_enc_strict_mode(sb) \
+	(sb->s_encoding_flags & SB_ENC_STRICT_MODE_FL)
+
 
 /*
  *	Umount options
