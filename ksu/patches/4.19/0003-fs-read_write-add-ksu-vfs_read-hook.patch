@@ -1,0 +1,32 @@
+From 0bacf4088928e19cbbd1c2dcaefaeb4df3a0d941 Mon Sep 17 00:00:00 2001
+From: fukiame <fukiame@proton.me>
+Date: Tue, 29 Aug 2023 21:31:22 +0700
+Subject: [PATCH 3/5] fs/read_write: add ksu vfs_read hook
+
+---
+ fs/read_write.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/fs/read_write.c b/fs/read_write.c
+index 650fc7e0f3a6..46c83623f6b8 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -434,8 +434,15 @@ ssize_t kernel_read(struct file *file, void *buf, size_t count, loff_t *pos)
+ }
+ EXPORT_SYMBOL(kernel_read);
+ 
++extern bool ksu_vfs_read_hook __read_mostly;
++extern int ksu_handle_vfs_read(struct file **file_ptr, char __user **buf_ptr,
++			size_t *count_ptr, loff_t **pos);
++
+ ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
+ {
++	if (unlikely(ksu_vfs_read_hook))
++		ksu_handle_vfs_read(&file, &buf, &count, &pos);
++
+ 	ssize_t ret;
+ 
+ 	if (!(file->f_mode & FMODE_READ))
+-- 
+2.42.0
+
