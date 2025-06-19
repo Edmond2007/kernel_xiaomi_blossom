@@ -10,7 +10,7 @@ curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh
 KSU_git_ver=$(cd KernelSU && git rev-list --count HEAD)
 KSU_ver=$(($KSU_git_ver + 10000 + 200))
 
-patchesdir="$outside/ksu/patches/$(echo $kernel_ver | cut -d. -f1,2)"
+patchesdir="$outside/ksu/patches/4.19"
 if [[ -d "$patchesdir" ]]; then
   for patch_file in "$patchesdir"/*.patch ; do
     patch -p1 < "$patch_file"
