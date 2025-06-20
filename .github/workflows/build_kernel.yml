@@ -40,10 +40,10 @@ jobs:
 
       - name: Build the kernel and log output
         run: |
+          mkdir -p out
+          make O=out ARCH=$ARCH CC=$CC blossom_defconfig
           chmod +x ksu/applyPatches.sh
           ./ksu/applyPatches.sh
-          mkdir -p out
-          make O=out ARCH=$ARCH CC=$CC test_defconfig
           ./clang.sh | tee build.log
 
       - name: Send build log to Telegram
