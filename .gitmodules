@@ -3,4 +3,4 @@
 	url = https://github.com/rsuntk/KernelSU.git
 [submodule "KernelSU-Next"]
 	path = KernelSU-Next
-	url = https://github.com/KernelSU-Next/KernelSU-Next
+	url = https://github.com/Edmond2007/KernelSU-Next
