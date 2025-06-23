@@ -3,7 +3,7 @@ name: Kernel Build CI
 on:
   push:
     branches:
-      - rebase
+      - sukisu
   workflow_dispatch:
 
 jobs:
