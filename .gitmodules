@@ -1,3 +1,4 @@
 [submodule "KernelSU"]
 	path = KernelSU
-	url = https://github.com/Edmond2007/SukiSU-Ultra.git
+	url = https://github.com/SukiSU-Ultra/SukiSU-Ultra
+	branch = nongki
