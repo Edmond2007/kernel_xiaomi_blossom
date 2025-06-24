@@ -579,11 +579,12 @@ static int compat_fillonedir(struct dir_context *ctx, const char *name,
 	struct compat_old_linux_dirent __user *dirent;
 	compat_ulong_t d_ino;
 
+	#ifdef CONFIG_KSU_SUSFS_SUS_PATH
+		struct inode *inode;
+	#endif
+	
 	if (buf->result)
 		return -EINVAL;
-#ifdef CONFIG_KSU_SUSFS_SUS_PATH
-	struct inode *inode;
-#endif
 	buf->result = verify_dirent_name(name, namlen);
 	if (buf->result < 0)
 		return buf->result;
