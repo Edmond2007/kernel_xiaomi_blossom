@@ -1336,10 +1336,10 @@ struct task_struct {
 	ANDROID_KABI_RESERVE(6);
 #endif // #if defined(CONFIG_KSU_SUSFS)
 
-#if defined(CONFIG_KSU_SUSFS)
-	u64 susfs_task_state;
-#endif
+	struct mutex			futex_exit_mutex;
+	
 	ANDROID_KABI_RESERVE(7);
+
 #ifdef CONFIG_KSU_SUSFS
 	ANDROID_KABI_USE(8, u64 susfs_last_fake_mnt_id);
 #else
