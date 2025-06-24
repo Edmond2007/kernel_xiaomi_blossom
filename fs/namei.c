@@ -3422,9 +3422,9 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 		if (susfs_is_inode_sus_path(dentry->d_inode)) {
 			error = susfs_inode_permission(dir_inode, nd->flags);
 			if (error) {
-				return ERR_PTR(error);
+				return error;
 			}
-			return ERR_PTR(-ENOENT);
+			return -ENOENT;
 		}
 #endif
 		/* Cached positive dentry: will open in f_op->open */
@@ -3476,9 +3476,9 @@ static int lookup_open(struct nameidata *nd, struct path *path,
 			if (susfs_is_inode_sus_path(dentry->d_inode)) {
 				error = susfs_inode_permission(dir_inode, nd->flags);
 				if (error) {
-					return ERR_PTR(error);
+					return error;
 				}
-			return ERR_PTR(-ENOENT);
+			return -ENOENT;
 			}
 		}
 #endif
@@ -3502,9 +3502,9 @@ no_open:
 				if (susfs_is_inode_sus_path(dentry->d_inode)) {
 					error = susfs_inode_permission(dir_inode, nd->flags);
 					if (error) {
-						return ERR_PTR(error);
+						return error;
 					}
-				return ERR_PTR(-ENOENT);
+				return -ENOENT;
 				}
 			}
 #endif
@@ -3571,9 +3571,9 @@ static int do_last(struct nameidata *nd,
 		if (susfs_is_inode_sus_path(dir->d_inode)) {
 			int err = susfs_inode_permission(dir->d_parent->d_inode, nd->flags);
 			if (err) {
-				return ERR_CAST(ERR_PTR(err));
+				return err;
 			}
-			return ERR_CAST(ERR_PTR(-ENOENT));
+			return -ENOENT;
 		}
 	}
 #endif
@@ -3587,13 +3587,13 @@ static int do_last(struct nameidata *nd,
 			goto finish_lookup;
 
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
-		if (dentry && dentry->d_inode) {
-			if (susfs_is_inode_sus_path(dentry->d_inode)) {
+		if (path.dentry && path.dentry->d_inode) {
+			if (susfs_is_inode_sus_path(path.dentry->d_inode)) {
 				int err = susfs_inode_permission(dir->d_inode, nd->flags);
 				if (err) {
-					return ERR_CAST(ERR_PTR(err));
+					return err;
 				}
-				return ERR_CAST(ERR_PTR(-ENOENT));
+				return -ENOENT;
 			}
 		}
 #endif
